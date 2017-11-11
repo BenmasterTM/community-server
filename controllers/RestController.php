@@ -20,6 +20,7 @@ class RestController extends Controller
         $cache = $this->checkCache($cache_token);
         if ($cache !== null) {
             $response = new Response();
+            $response->setStatusCode(200, "OK");
             $response->setJsonContent( $cache );
             return $response;
         }
@@ -78,6 +79,7 @@ class RestController extends Controller
         
         // create a response
         $response = new Response();
+        $response->setStatusCode(200, "OK");
         $response->setJsonContent( $json );
 
         return $response;
@@ -91,6 +93,7 @@ class RestController extends Controller
         $cache = $this->checkCache($cache_token);
         if ($cache !== null) {
             $response = new Response();
+            $response->setStatusCode(200, "OK");
             $response->setJsonContent( $cache );
             return $response;
         }
@@ -205,6 +208,7 @@ class RestController extends Controller
         
         // create a response
         $response = new Response();
+        $response->setStatusCode(200, "OK");
         $response->setJsonContent( $JSON );
 
         return $response;
@@ -221,8 +225,8 @@ class RestController extends Controller
             $JSON = [ 'state' => 'disabled', 'message' => 'endpoint disabled' ];
             
             $response = new Response();
-            $response->setJsonContent( $JSON );
             $response->setStatusCode (405);
+            $response->setJsonContent( $JSON );
             
             return $response;
         }
@@ -237,6 +241,7 @@ class RestController extends Controller
                 $JSON = [ 'state' => 'error', 'message' => 'to many torrents' ];
                 
                 $response = new Response();
+                $response->setStatusCode(200, "OK");
                 $response->setJsonContent( $JSON );
                 
                 return $response;
@@ -311,6 +316,7 @@ class RestController extends Controller
             
             // create a response
             $response = new Response();
+            $response->setStatusCode(200, "OK");
             $response->setJsonContent( $JSON );
             
             $this->invalidateCache(); // clear cache older than the new items inserted
@@ -321,8 +327,8 @@ class RestController extends Controller
             
             // create a response
             $response = new Response();
-            $response->setJsonContent( $JSON );
             $response->setStatusCode (422);
+            $response->setJsonContent( $JSON );
             
         }
         
