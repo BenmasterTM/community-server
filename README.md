@@ -20,7 +20,7 @@ Point your domain to the **/public** folder.
 
 Create in your database the following table:
 
-´´´
+```bash
 CREATE TABLE `torrents` (
   `id` int(11) UNSIGNED NOT NULL,
   `hash` varchar(50) DEFAULT NULL,
@@ -45,6 +45,6 @@ ALTER TABLE `torrents`
   ADD KEY `hash` (`hash`),
   ADD KEY `pub` (`pub`);
   
-´´´
+```
 
 You can disable the **/library/announce** endpoint editing this option in the config.php, to create allow only add torrents from other CMS or manual DB edition.
