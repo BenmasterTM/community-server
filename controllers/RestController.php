@@ -13,10 +13,48 @@ class RestController extends Controller
     
     private $resultPerPage = 100;
     
+    protected $isLogged = false;
+    protected $clients = [];
+    
+    public function onConstruct() {
+        
+        $auth = $this->request->getHeader('Authorization');
+        if ( (!empty($auth) && !empty($this->config->options->remote_auth) && $auth == 'Basic ' . $this->config->options->remote_auth) || $this->config->options->remote_auth == false ) {
+            $this->isLogged = true;
+        }
+                    
+        if ($this->config->options->enable_share_clients === true) {
+        
+            $this->clients = $this->cache->get('clients');
+            
+            // check if the static default IPs are in the list
+            foreach ($this->config->options->default_share_clients as $client) {
+                if (!$this->clients[$client]) {
+                    $this->clients[$client] = $client;
+                }
+            }
+            
+            $address = $this->request->getClientAddress(); // remote IP
+            if (!$this->clients[$address]) {
+                
+                $this->clients[$address] = $address;
+                            
+                // remove from clients the old and insert new if maxClients is reached
+                if (count($this->clients) >= $this->config->options->max_share_clients) {
+                    array_shift($this->clients);
+                }
+                
+                $this->cache->save('clients', $this->clients);
+            }
+        
+        }
+                
+    }
+    
     // GET /library ?page (without page param, return only the total count, NOT limit)
     public function libraryAction() {
-        
-        $cache_token = md5(print_r($this->request->getQuery(), true));
+                   
+        $cache_token = md5(print_r(array($this->request->getQuery(), $this->isLogged), true));
         $cache = $this->checkCache($cache_token);
         if ($cache !== null) {
             $response = new Response();
@@ -34,7 +72,8 @@ class RestController extends Controller
                 $this->cache->save($cache_token, ['time' => time(), 'working' =>  true]);
             }
             
-            $result = $this->db->query( 'SELECT count(hash) AS count FROM torrents' );
+            $where = ($this->isLogged !== true) ? ' WHERE pub = 1 ' : '' ; // check if is identify user or not            
+            $result = $this->db->query( 'SELECT count(hash) AS count FROM torrents '.$where );
             $row = $result->fetch();
             $json = ['state' => 'ok', 'count' => intval($row['count'])];
         
@@ -48,8 +87,9 @@ class RestController extends Controller
             if ($this->config->options->enable_cache === true) {
                 $this->cache->save($cache_token, ['time' => time(), 'working' =>  true]);
             }
-                        
-            $result = $this->db->query( 'SELECT id, hash, name, magnet, description, tags, languages, date, metadata FROM torrents ORDER BY id DESC LIMIT ' . $limit . ' OFFSET ' . $offset );
+            
+            $where = ($this->isLogged !== true) ? ' WHERE pub = 1 ' : '' ; // check if is identify user or not
+            $result = $this->db->query( 'SELECT id, hash, name, magnet, description, tags, languages, date, metadata FROM torrents '. $where .' ORDER BY id DESC LIMIT ' . $limit . ' OFFSET ' . $offset );
             while ($row = $result->fetch()) {
                 
                 $results[] = [
@@ -65,7 +105,7 @@ class RestController extends Controller
                 ];
             }
 
-            $result = $this->db->query( 'SELECT count(hash) AS count FROM torrents' );
+            $result = $this->db->query( 'SELECT count(hash) AS count FROM torrents '.$where );
             $row = $result->fetch();
             
             $json = ['state' => 'ok', 'rows' => $results, 'total' => intval($row['count']), 'limit' => $this->resultPerPage, 'page' => $page];
@@ -89,7 +129,7 @@ class RestController extends Controller
     // GET /library/search ?query&tags&languages&page (NOT limit)
     public function librarySearchAction() {
         
-        $cache_token = md5(print_r($this->request->getQuery(), true));
+        $cache_token = md5(print_r(array($this->request->getQuery(), $this->isLogged), true));
         $cache = $this->checkCache($cache_token);
         if ($cache !== null) {
             $response = new Response();
@@ -111,7 +151,13 @@ class RestController extends Controller
         $options['tags'] = (!empty($this->request->get('tags'))) ? explode(',', $this->request->get('tags')) : null;
         $options['languages'] = (!empty($this->request->get('languages'))) ? explode(',', $this->request->get('languages')) : null;
         $options['search'] = $this->request->get('search');
-                
+        
+        // check if is identify user or not
+        if ($this->isLogged !== true) {
+            $query[] = "pub = ?";
+            $params[] = "1";
+        }
+        
         if (!empty($options['id'])) {
             $query[] = ("id IN (" . implode(',', array_fill(0, count($options['id']), '?' )) . ")");
             for ($i=0; $i<count($options['id']); $i++) {
@@ -333,6 +379,32 @@ class RestController extends Controller
         }
         
         return $response;                        
+        
+    }
+    
+    // GET /library/clients
+    public function clientsAction() {
+        
+        // if is configured, disable the announce returning state: disabled
+        if ($this->config->options->enable_share_clients !== true) {
+            
+            $JSON = [ 'state' => 'disabled', 'message' => 'endpoint disabled' ];
+            
+            $response = new Response();
+            $response->setStatusCode (405);
+            $response->setJsonContent( $JSON );
+                    
+        } else {
+        
+            $JSON = [ 'state' => 'ok', 'clients' => array_values($this->clients) ];
+            
+            $response = new Response();
+            $response->setStatusCode(200, "OK");
+            $response->setJsonContent( $JSON );
+    
+        }
+        
+        return $response;
         
     }
     

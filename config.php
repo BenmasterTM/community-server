@@ -22,5 +22,9 @@ return [
     "options" => [
         "enable_cache" => true, // disable this to kill your DB
         "enable_announce" => true, // enable or disable the announce endpoint (allow clients create torrents)
+        "enable_share_clients" => true, // enable the option to share last clients connected to the community with other clients
+        "max_share_clients" => 100, // max clients in the last clients array
+        "default_share_clients" => [], // static IPs of shared clients
+        "remote_auth" => false, // to show only public or private torrents, set the auth string here, is an example, use your own user-login-auth-system
     ],
 ];

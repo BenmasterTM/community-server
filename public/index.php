@@ -167,6 +167,12 @@
         $RestController,
         "libraryAnnounce"
     ]);
+
+    // GET /library/clients
+    $app->get('/client', [
+        $RestController,
+        "clientsAction"
+    ]);
     
     $app->notFound(function () use ($app) {
         $app->response->setStatusCode(404, "Not Found")->sendHeaders();

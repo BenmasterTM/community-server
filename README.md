@@ -48,3 +48,4 @@ ALTER TABLE `torrents`
 ```
 
 You can disable the **/library/announce** endpoint editing this option in the config.php, to create allow only add torrents from other CMS or manual DB edition.
+The same for the **/client** endpoint, that share the las connected IPs to the server to help other clients discover new neighbors.
