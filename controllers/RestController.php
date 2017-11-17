@@ -93,7 +93,6 @@ class RestController extends Controller
             while ($row = $result->fetch()) {
                 
                 $results[] = [
-                    'id' => $row['id'],
                     'hash' => $row['hash'],
                     'name' => $row['name'],
                     'magnet' => $row['magnet'],
@@ -234,7 +233,6 @@ class RestController extends Controller
         while ($row = $result->fetch()) {
             
             $JSON['rows'][] = [
-                'id' => $row['id'],
                 'hash' => $row['hash'],
                 'name' => $row['name'],
                 'magnet' => $row['magnet'],
